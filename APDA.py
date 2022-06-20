@@ -49,7 +49,7 @@ iam0      = 'red'
 altri     = 'k'
 
 #Working directories
-wdir      = "C:\\TESIMAG\python\Mem-all-proc"+"\\"
+wdir      = "C:\\Cartel\python\ADPA"+"\\"
 in_dir    = wdir + "DROP_IN"+"\\"
 out_dir   = wdir + "OUTPUTS"+"\\"
 

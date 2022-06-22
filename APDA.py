@@ -1,12 +1,12 @@
 ###############################################################################
 #                                                                             #
 #                                                                             #
-#                   ALL_PROCESS DATA ANALYSIS  -  APDA                        #
+#                   ALL PROCESS DATA ANALYSIS  -  APDA                        #
 #                                                                             #
 #                                                                             #
 #    Author: GIACOMO AMBROGIO - 2022                                          #
-#    Usage:  Basic script for reading .meminfo files                          #
-#            from 'ALLP' Crystal calculations                                 #
+#    Usage:  Basic script for reading .meminfo files from MEMOPRT             #
+#            'ALLPINT' and 'ALLPEXT' Crystal calculations                     #
 #                                                                             #
 #---------------------------------------------------                          #
 #                 BEFORE USE!!!                                               #
@@ -49,7 +49,7 @@ iam0      = 'red'
 altri     = 'k'
 
 #Working directories
-wdir      = "C:\\Cartel\python\ADPA"+"\\"
+wdir      = "C:\\TESIMAG\python\APDA"+"\\"
 in_dir    = wdir + "DROP_IN"+"\\"
 out_dir   = wdir + "OUTPUTS"+"\\"
 
@@ -69,10 +69,11 @@ def DVMEM(infile):
     file    = open(path, "r")
     for line in file:
         if "DVMEM" in line:
-            element = line[7:19]
+            element = line[8:19]
             calls.append(element.strip())
-            element = line[47:59]
-            DVMEM.append(float(element.strip()))
+            element = line.split()
+            ind     = element.index('DVMEM') + 1
+            DVMEM.append(float(element[ind]))
     file.close()
     return calls, DVMEM
 
@@ -214,7 +215,7 @@ for name in names:
     tab.write('\nAuthor:        GIACOMO AMBROGIO')
     tab.write('\nCreation date: '+day)
     tab.write('\n\nThis file combines all the informations obtained from')
-    tab.write('\n\"Chiara Ribaldone\'s subroutines\" in Crystal')
+    tab.write('\n\"Chiaretta\'s subroutines\" in Crystal')
     tab.write('\n\n')
     tab.write('\n============================================================')
     tab.write('\nCrystal calculation:       '+name)

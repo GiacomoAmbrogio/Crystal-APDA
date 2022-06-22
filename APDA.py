@@ -49,7 +49,7 @@ iam0      = 'red'
 altri     = 'k'
 
 #Working directories
-wdir      = "C:\\TESIMAG\python\APDA"+"\\"
+wdir      = "C:\\Folder\python\APDA"+"\\"
 in_dir    = wdir + "DROP_IN"+"\\"
 out_dir   = wdir + "OUTPUTS"+"\\"
 
@@ -215,7 +215,7 @@ for name in names:
     tab.write('\nAuthor:        GIACOMO AMBROGIO')
     tab.write('\nCreation date: '+day)
     tab.write('\n\nThis file combines all the informations obtained from')
-    tab.write('\n\"Chiaretta\'s subroutines\" in Crystal')
+    tab.write('\n\"Chiara Ribaldone\'s subroutines\" in Crystal')
     tab.write('\n\n')
     tab.write('\n============================================================')
     tab.write('\nCrystal calculation:       '+name)

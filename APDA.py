@@ -10,27 +10,6 @@
 #    Usage:  Basic script for reading .meminfo files from MEMOPRT             #
 #            'ALLPINT' and 'ALLPEXT' Crystal calculations                     #
 #                                                                             #
-#---------------------------------------------------                          #
-#                 BEFORE USE!!!                                               #
-#---------------------------------------------------                          #
-#   Change in Variables section the Working Directories (wdir)                #
-#   wdir is the main directory, in_dir and out_dir are the subdirectories     #
-#   useed for INPUT and OUTPUT respectively                                   #
-#                                                                             #
-#                                                                             #
-#   INSTRUCTIONS:                                                             #
-#                                                                             #
-#   Drop all *.meminfo files in the in_dir directory                          #
-#                                                                             #
-#   *.meminfo files from a single crystal calculation should have the same    #
-#   name and extension ".pX.meminfo" where X is the number of the processors  #
-#                                                                             #
-#   This program also works fine with multiple files at the same time         #
-#   (different names)                                                         #
-#                                                                             #
-#                                                                             #
-#   There must always be a *.p0.meminfo file and *.p1.meminfo file            #
-#   (at least 2 procs)                                                        #
 #                                                                             #
 ###############################################################################
 
@@ -44,8 +23,7 @@ import re
 import pandas as pd
 from tabulate import tabulate
 import configparser as cnfg
-import matplotlib.font_manager as font_manager
-
+from matplotlib import font_manager
 
 
 #---------------------------------------------------
@@ -385,27 +363,6 @@ for name in names:
             plt.savefig(out_dir+name+'.png', dpi=300)
             if debug: print('Creating figure in : ', out_dir+name+'.png')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #---------------------------------------------------
 #                 TABULAR.txt
 #---------------------------------------------------
@@ -542,7 +499,7 @@ for name in names:
             tab.write('\n'+60*'=')
             tab.close()
 # Special thanks to Chiara Ribaldone who wrote all the MEMOPRT-related
-# subroutines that made theese extended memory analysis possible
+# subroutines that made these extended memory analysis possible
 #---------------------------------------------------
 #                 END
 #---------------------------------------------------

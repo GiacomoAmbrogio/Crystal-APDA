@@ -34,7 +34,7 @@ these memory results via the config.ini file (see next section).
 #   CONFIGURATION
 Using the config.ini file you can modify the behavor of the program:
 
-APDA: turn on/off featurse of the APDA tool
+APDA: turn on/off features of the APDA tool
     PLOT     - making of flot images
     TABULAR  - making of .txt outputs file
     INTERNAL - analyse internal memory

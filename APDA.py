@@ -37,7 +37,6 @@ cp = cnfg.ConfigParser()
 if not os.path.exists(wdir+'config.ini'):
     config = open(wdir+'config.ini', 'a')
     config.write('[APDA]\n')
-    config.write('DEBUG = False\n')
     config.write('PLOT= True\n')
     config.write('TABULAR = True\n')
     config.write('INTERNAL = True\n')

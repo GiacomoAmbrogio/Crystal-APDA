@@ -310,6 +310,7 @@ for name in names:
     if external:
         maxmemext = np.amax(MEMEXT)
         DFext = pd.DataFrame(MEMEXT)
+
 # AVG MEM/CORE  -  ALPHA VERSION   -   only for external memory
     if media:
         DFtotmemext = DFext.sum(axis = 1)
@@ -325,12 +326,19 @@ for name in names:
                     if ind not in ind_da_buttare:
                         ind_da_buttare.append(ind)
         ind_da_buttare.sort()
-        if debug: print('Calls non suitable')
+        if debug: print('Calls unreliable')
         if debug: print('for MEM/Core AVG   : ', ind_da_buttare)
+        unreliable = []
+        for c in np.arange(len(TIMVRS)):
+            if c in ind_da_buttare:
+                unreliable.append('*')
+            else:
+                unreliable.append(' ')
 #Selecting acceptable results
-        for ind in ind_da_buttare:
-            DFavgext.at[ind, 0] = '-'
-            DFtotmemext.at[ind, 0] = '-'
+#       for ind in ind_da_buttare:
+#           DFavgext.at[ind, 0] = '-'
+#           DFtotmemext.at[ind, 0] = '-'
+
 #---------------------------------------------------
 #                 MEMORY PLOTS
 #---------------------------------------------------
@@ -582,13 +590,17 @@ for name in names:
                 tab.write('\n--All Memory values are expressed in MB--')
                 tab.write('\n-----------------------------------------')
                 tab.write('\n')
-                Indici = ['Calls', 'Ext AVG', 'Ext TOT']
+                Indici = ['Calls', ' ', 'Ext AVG', 'Ext TOT', ' ']
                 DFavg = pd.DataFrame()
                 DFavg.insert(0, 'Calls', TIMVRS)
-                DFavg.insert(1, 'AVG', DFavgext)
-                DFavg.insert(2, 'TOT', DFtotmemext)
+                DFavg.insert(1, '--', unreliable)
+                DFavg.insert(2, 'AVG', DFavgext)
+                DFavg.insert(3, 'TOT', DFtotmemext)
+                DFavg.insert(4, '---', unreliable)
                 tab.write(tabulate(DFavg, headers=Indici, tablefmt='github'))
-                tab.write('\n')    
+                tab.write('\n')
+                tab.write('\n* Unreliable: overestimated')
+                tab.write('\n')
 #Time data:
             if tplot and fileoutexists:
                 tab.write('\n-----------------------------------------')
@@ -598,6 +610,8 @@ for name in names:
                 tab.write('\n-----------------------------------------')
                 tab.write('\n')
                 Indici = ['Calls', 'TCPU', 'TELAPSE']
+                DFtime.insert(0, 'Calls', tTIMVRS)
+                DFtime.insert(2, 'TELAPSE', TELAPSE)
                 tab.write(tabulate(DFtime, headers=Indici, tablefmt='github'))
 #Print all memory data
             tab.write('\n\n\n')

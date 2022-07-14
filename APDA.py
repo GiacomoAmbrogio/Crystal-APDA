@@ -37,7 +37,8 @@ cp = cnfg.ConfigParser()
 if not os.path.exists(wdir+'config.ini'):
     config = open(wdir+'config.ini', 'a')
     config.write('[APDA]\n')
-    config.write('PLOT= True\n')
+    config.write('MEMPLOT= True\n')
+    config.write('TIMEPLOT = False\n')
     config.write('TABULAR = True\n')
     config.write('INTERNAL = True\n')
     config.write('EXTERNAL = True\n')
@@ -48,23 +49,33 @@ if not os.path.exists(wdir+'config.ini'):
     config.write('[PLOT]\n')
     config.write('SEPARATEPLOTS = True\n')
     config.write('#    Only accept True or False, ')
-    config.write('create two different plot figures\n\n')
+    config.write('create two different plot figures for memory\n\n')
     config.write('IAMEQ0_COLOR = default\n')
     config.write('OTHER_PROCS_COLOR = default\n')
     config.write('#    Only accept two Hex colors ')
     config.write('(example IAMEQ0_COLOR = #00FF00 #FF0000)\n')
-    config.write('#    First one is for internal, second is for external\n\n\n')
+    config.write('#    First one is for internal, second is for external\n\n')
+    config.write('TIME_COLOR = default\n')
+    config.write('#    Only accept one Hex color')
+    config.write(' (example TIME_COLOR = #0000FF)')
+    config.write('\n\n')
     config.close()
 cp.read(wdir+'config.ini')
 #setting variables
-debug    = cp['APDA'].getboolean('DEBUG')
-makeplot = cp['APDA'].getboolean('PLOT')
-maketab  = cp['APDA'].getboolean('TABULAR')
+debug       = cp['APDA'].getboolean('DEBUG')
+makeplot    = cp['APDA'].getboolean('MEMPLOT')
+tplot       = cp['APDA'].getboolean('TIMEPLOT')
+media       = cp['APDA'].getboolean('MEMAVG')
+maketab     = cp['APDA'].getboolean('TABULAR')
 intoverride = cp['APDA'].getboolean('INTERNAL')
 extoverride = cp['APDA'].getboolean('EXTERNAL')
-in_dir   = wdir+cp['DIRECTORIES']['INPUT']+"\\"
-out_dir  = wdir+cp['DIRECTORIES']['OUTPUT']+"\\"
-sepplots = cp['PLOT'].getboolean('SEPARATEPLOTS')
+
+
+
+
+in_dir      = wdir+cp['DIRECTORIES']['INPUT']+"\\"
+out_dir     = wdir+cp['DIRECTORIES']['OUTPUT']+"\\"
+sepplots    = cp['PLOT'].getboolean('SEPARATEPLOTS')
 #plot lines colors settings
 if cp['PLOT']['IAMEQ0_COLOR'] == 'default':
     iam0=['green', 'red']
@@ -74,26 +85,31 @@ if cp['PLOT']['OTHER_PROCS_COLOR'] == 'default':
     altri=['#004000', '#400000']
 else:
     altri=cp['PLOT']['OTHER_PROCS_COLOR'].split()
+if cp['PLOT']['TIME_COLOR'] == 'default':
+    tp='blue'
+else: tp=cp['PLOT']['TIME_COLOR']
 #font for labels in plots
 font = font_manager.FontProperties(family='Consolas',style='normal', size=7)
 #Console output
 print('--------------------------')
 print('SETTINGS:')
 print('--------------------------')
-print('Debug        : ', debug)
-print('Make PLOT    : ', makeplot)
-print('Make TABULAR : ', maketab)
-print('Internal mem : ', intoverride)
-print('External mem : ', extoverride)
+print('Debug         : ', debug)
+print('Make Mem PLOT : ', makeplot)
+print('Make Time PLOT: ', tplot)
+print('Make TABULAR  : ', maketab)
+print('Internal mem  : ', intoverride)
+print('External mem  : ', extoverride)
 print('--------------------------')
 print()
-if debug: print('config.ini   : ', wdir+'config.ini')
-if debug: print('Working dir  : ', wdir)
-if debug: print('Input dir    : ', in_dir)
-if debug: print('Output dir   : ', out_dir)
-if debug: print('Make 2 plots : ', sepplots)
-if debug: print('IAMEQ0 colors: ', iam0)
-if debug: print('OTHER colors : ', altri)
+if debug: print('config.ini      : ', wdir+'config.ini')
+if debug: print('Working dir     : ', wdir)
+if debug: print('Input dir       : ', in_dir)
+if debug: print('Output dir      : ', out_dir)
+if debug: print('Make 2 mem plots: ', sepplots)
+if debug: print('IAMEQ0 colors   : ', iam0)
+if debug: print('OTHER colors    : ', altri)
+if debug: print('TIME color      : ', tp)
 
 #---------------------------------------------------
 #                 FUNCTIONS
@@ -190,7 +206,24 @@ def PID(infile):
     file.close()
     return pids[0]
 
-
+#return TIMVRS calls and MAX MEM  
+def TIME(infile):
+    path    = in_dir+infile
+    time    = []
+    tlps    = []
+    calls   = []
+    file    = open(path, "r")
+    for line in file:
+        if "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" in line:
+            element = line[31:43]
+            calls.append(element.strip())
+            element = line.split()
+            ind     = element.index('TCPU') + 1
+            time.append(float(element[ind]))
+            ind2    = element.index('TELAPSE') + 1
+            tlps.append(float(element[ind2]))
+    file.close()
+    return calls, time, tlps
 
 
 
@@ -207,13 +240,14 @@ now      = datetime.now()
 day      = now.strftime("%b-%d-%Y")
 #searching for input names
 allfiles = os.listdir(in_dir)
+allmeminfofiles = ([s for s in allfiles if 'meminfo' in s])
 r        = re.compile('.*\.p0\.')
-p0files  = list(filter(r.match, allfiles))
+p0files  = list(filter(r.match, allmeminfofiles))
 names    = []
 for file in p0files:
     a=file.replace('.p0.meminfo','')
     names.append(a)
-if debug: print('Spotted files: ',names)
+if debug: print('Spotted files : ',names)
 
 #---------------------------------------------------
 #                 LOOP
@@ -224,10 +258,10 @@ i=0
 for name in names:
     i += 1
     if debug: print ('--------------------------')
-    if debug: print ('File         : ', name)
+    if debug: print ('File               : ', name)
 #counter for nproc
-    nproc = sum(name+'.' in s for s in allfiles)
-    if debug: print ('nProc        : ', nproc)
+    nproc = sum(name+'.' in s for s in allmeminfofiles)
+    if debug: print ('nProc              : ', nproc)
     proc    = np.arange(1, nproc, 1, dtype=int)
     allproc = np.arange(0, nproc, 1, dtype=int)
 #---------------------------------------------------
@@ -240,8 +274,8 @@ for name in names:
 #check if config block some kind of memory analysis
     internal = inter and intoverride
     external = exter and extoverride
-    if debug: print ('Internal mem :', internal)
-    if debug: print ('External mem :', external)
+    if debug: print ('Internal mem       :', internal)
+    if debug: print ('External mem       :', external)
 #☻extracting .p0.meminfo MEM values
     if internal:
         sub, mem = USED(file)
@@ -276,9 +310,29 @@ for name in names:
     if external:
         maxmemext = np.amax(MEMEXT)
         DFext = pd.DataFrame(MEMEXT)
-    
+# AVG MEM/CORE  -  ALPHA VERSION   -   only for external memory
+    if media:
+        DFtotmemext = DFext.sum(axis = 1)
+        DFavgext = DFtotmemext / nproc
+        DFavgext = DFavgext.round(decimals = 2)
+        DFtotmemext = DFtotmemext.round(decimals = 2)
+#Identification of unreliable calls
+        ind_da_buttare = []
+        for p in allproc:
+            for ind in DFext.index:
+                if ind == 0: continue
+                if DFext[p][ind]-DFext[p][ind-1] == 0:
+                    if ind not in ind_da_buttare:
+                        ind_da_buttare.append(ind)
+        ind_da_buttare.sort()
+        if debug: print('Calls non suitable')
+        if debug: print('for MEM/Core AVG   : ', ind_da_buttare)
+#Selecting acceptable results
+        for ind in ind_da_buttare:
+            DFavgext.at[ind, 0] = '-'
+            DFtotmemext.at[ind, 0] = '-'
 #---------------------------------------------------
-#                 PLOT
+#                 MEMORY PLOTS
 #---------------------------------------------------
     if makeplot:
 #defining the 'call timvrs' axis
@@ -362,6 +416,53 @@ for name in names:
             plt.savefig(out_dir+name+'.png', dpi=300)
             if debug: print('Creating figure in : ', out_dir+name+'.png')
 
+#---------------------------------------------------
+#                 TIME PLOTS
+#---------------------------------------------------
+    fileoutexists = False
+    if tplot:
+        if os.path.exists(in_dir+name+'.outp'):
+            fileout = name+'.outp'
+            fileoutexists = True
+            if debug: print('Found outp file    : ', fileout)
+        else:
+            if os.path.exists(in_dir+name+'.out'):
+                fileout = name+'.out'
+                fileoutexists = True
+                if debug: print('Found out file     : ', fileout)
+            else:
+                print ('#######################################')
+                print ('WARNING: NO .out OR .outp FILE SPOTTED FOR ', name)
+                print ('IMPOSSIBLE TO PLOT TIME')
+        if fileoutexists:
+            sub, tim, tlp = TIME(fileout)
+            tTIMVRS       = np.array(sub)
+            TIMES         = np.array(tim)
+            TELAPSE       = np.array(tlp)
+            maxtime = np.amax(TIMES)
+            DFtime = pd.DataFrame(TIMES)
+            #defining the 'call timvrs' axis
+            x = np.array(range(len(tTIMVRS)))
+            #ratio for figure sides
+            ratio = len(TIMVRS)*0.4     
+            i+=1
+            #creating plot figure
+            plt.figure (num=i, figsize=(ratio, 4), edgecolor='k', dpi=300)
+            #plotting time values
+            plt.plot (x, DFtime[0], linewidth=1, marker=',',
+                                  color=tp)
+            #axis parameters
+            plt.xlim   (left=1, right=len(tTIMVRS)-1)
+            plt.ylim   (bottom=0)
+            plt.ylabel ('CPU Time (s)', fontsize=8)
+            plt.yticks (fontsize=7)
+            plt.xticks (x, sub, fontsize=4, rotation = 60)
+            plt.vlines (x, 0, maxtime, alpha=0.2, color='k', linewidth=0.3)     
+            caption  = day+' - '+name+' CPU Time'
+            plt.title  (caption, fontsize=8)
+            #saving figure in output directory
+            plt.savefig(out_dir+name+'_time'+'.png', dpi=300)
+            if debug: print('Creating figure in : ', out_dir+name+'_time.png')
 #---------------------------------------------------
 #                 TABULAR.txt
 #---------------------------------------------------
@@ -472,7 +573,34 @@ for name in names:
                 dati = pd.DataFrame(list(zip(procindex,Pids,indcalls,pmaxmems,BaseLine)))
                 Indici = ['Proc', 'PID', 'TIMVRS call', 'MaxMEM', 'BaseLine']
                 tab.write(tabulate(dati, headers=Indici, tablefmt='github'))
-                tab.write('\n\n\n')
+                tab.write('\n')       
+#Average memory analisys:   ALPHA VERSION              
+            if media:
+                tab.write('\n-----------------------------------------')
+                tab.write('\nAverage MEM/Core Analisys:')
+                tab.write('\n-----------------------------------------')
+                tab.write('\n--All Memory values are expressed in MB--')
+                tab.write('\n-----------------------------------------')
+                tab.write('\n')
+                Indici = ['Calls', 'Ext AVG', 'Ext TOT']
+                DFavg = pd.DataFrame()
+                DFavg.insert(0, 'Calls', TIMVRS)
+                DFavg.insert(1, 'AVG', DFavgext)
+                DFavg.insert(2, 'TOT', DFtotmemext)
+                tab.write(tabulate(DFavg, headers=Indici, tablefmt='github'))
+                tab.write('\n')    
+#Time data:
+            if tplot and fileoutexists:
+                tab.write('\n-----------------------------------------')
+                tab.write('\nCPU Time Analisys:')
+                tab.write('\n-----------------------------------------')
+                tab.write('\n--  All Time values are expressed in s --')
+                tab.write('\n-----------------------------------------')
+                tab.write('\n')
+                Indici = ['Calls', 'TCPU', 'TELAPSE']
+                tab.write(tabulate(DFtime, headers=Indici, tablefmt='github'))
+#Print all memory data
+            tab.write('\n\n\n')
             tab.write('\n'+60*'=')
             tab.write('\nAll Memory data acquired:')
             tab.write('\n'+60*'=')
